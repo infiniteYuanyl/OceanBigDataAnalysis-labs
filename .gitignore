@@ -1,0 +1,8 @@
+data/
+__pycache__/
+.idea/
+*.zip
+*.md
+*.txt
+*.npy
+*.ipynb
