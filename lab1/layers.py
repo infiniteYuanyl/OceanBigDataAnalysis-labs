@@ -59,8 +59,6 @@ class ReLULayer(object):
         output = self.input * (self.input > 0)
         return output
     def backward(self, top_diff):  # 反向传播的计算
-        # TODO：ReLU层的反向传播，计算本层损失
-        # bottom_diff = ________________
         #同理，把那些input > 0的位置全部 * 1（relu的求导），原来被抑制为0的位置不变，不传播损失。
         
         bottom_diff = top_diff * ( self.input >0 )
@@ -78,8 +76,7 @@ class SigmoidLayer(object):
         self.output = output
         return output
     def backward(self, top_diff):  # 反向传播的计算
-        # TODO：ReLU层的反向传播，计算本层损失
-        # bottom_diff = ________________
+        
         # sigmoid 导数为sig(x) * (1 - sig(x))
         bottom_diff = top_diff * self.output * (1-self.output)
         
@@ -89,7 +86,7 @@ class SoftmaxLossLayer(object):
     def __init__(self):
         print('\tSoftmax loss layer.')
     def forward(self, input):  # 前向传播的计算
-        # TODO：softmax 损失层的前向传播，计算输出结果
+        
         input_max = np.max(input, axis=1, keepdims=True)
         input_exp = np.exp(input - input_max)
         self.prob = input_exp / np.sum(input_exp,axis=1,keepdims=True).reshape(-1,1)
@@ -99,11 +96,8 @@ class SoftmaxLossLayer(object):
         label = label.astype(np.int32)
         self.batch_size = self.prob.shape[0]
         self.label_onehot = np.zeros_like(self.prob)
-        # print(self.label_onehot.shape)
-        # print('label',label)
         self.label_onehot[np.arange(self.batch_size), label] = 1.0
-        # print(self.label_onehot.shape)
-        # print(self.label_onehot)
+        
         loss = -np.sum(np.log(self.prob) * self.label_onehot) / self.batch_size
         return loss
     def backward(self):  # 反向传播的计算
@@ -170,7 +164,7 @@ class ConvolutionalLayer(object):
         # cin,k,k,cout -> cin*k*k,cout
         self.weight_reshape = np.reshape(self.weight,(-1,self.channel_out))
         # img2col:N * H * W,cin*k*k
-        # print(height_out)
+        
         self.img2col = np.zeros( [self.input.shape[0]*height_out*width_out ,self.channel_in*self.kernel_size*self.kernel_size ])
         
         # 将img转换为列向量
@@ -189,8 +183,7 @@ class ConvolutionalLayer(object):
         self.forward_time = time.time() - start_time
         return self.output
     def backward(self, top_diff):
-        # TODO: 改进backward函数，使得计算加速
-        start_time = time.time()
+        
         self.d_weight = np.zeros(self.weight.shape)
         self.d_bias = np.zeros(self.bias.shape)
         bottom_diff = np.zeros(self.input_pad.shape)
@@ -213,7 +206,7 @@ class ConvolutionalLayer(object):
         
         bottom_diff = bottom_diff[:, :, self.padding:self.padding+self.input.shape[2], self.padding:self.padding+self.input.shape[3]]
         
-        self.backward_time = time.time() - start_time
+        
         
         return bottom_diff
     def get_gradient(self):
@@ -262,7 +255,6 @@ class MaxPoolingLayer(object):
 
         return self.output
     def backward(self, top_diff):
-        # TODO: 改进backward函数，使得计算加速
 
         bottom_diff = np.multiply(self.max_index, top_diff.repeat(self.kernel_size,2).repeat(self.kernel_size,3))
         return bottom_diff
