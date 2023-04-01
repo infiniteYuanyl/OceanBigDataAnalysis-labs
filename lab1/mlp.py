@@ -51,8 +51,8 @@ class BaseLayer(object):
 
 
 class MLP(object):
-    def __init__(self, batch_size=100, input_size=784,hidden_dims=[],ac_func='relu',init_method='random',\
-     num_classes=10, lr=0.005, max_epoch=1, print_iter=100,dataset_type='cifar10'):
+    def __init__(self, batch_size=1000, input_size=784,hidden_dims=[],ac_func='relu',init_method='random',\
+     num_classes=10, lr=0.005, max_epoch=1, print_iter=10,dataset_type='cifar10'):
         self.batch_size = batch_size
         self.input_size = input_size
         self.in_channels = hidden_dims

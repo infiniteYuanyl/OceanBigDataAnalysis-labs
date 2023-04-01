@@ -52,8 +52,12 @@ def load_cifar10():
     data_dict = unpickle(data_dir + '/test_batch')
     test_images[:, :, :, :] = np.transpose(np.reshape(data_dict[b'data'], (10000, 3, 32, 32)), (0, 2, 3, 1))
     test_labels[:] = data_dict[b'labels']
-    train_images = train_images.astype(np.float32) / 255.0
-    test_images = test_images.astype(np.float32) / 255.0
+    # train_images = train_images.astype(np.float32) / 255.0
+    # test_images = test_images.astype(np.float32) / 255.0
+
+    # for i in range(3):
+    #     train_images[:, :, i] = (train_images[:, :, i] - 0.5) / 0.5
+    #     test_images[:, :, i] = (test_images[:, :, i] - 0.5) / 0.5
 
     # Split the dataset into training and testing sets
     num_train = int(train_images.shape[0] * 0.8)

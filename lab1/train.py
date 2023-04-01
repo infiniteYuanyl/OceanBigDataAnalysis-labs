@@ -64,4 +64,4 @@ if __name__ == '__main__':
         cnn.build_model()
         cnn.init_model()
         cnn.train()
-        cnn.evlautate()
+        cnn.evaluate()

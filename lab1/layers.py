@@ -186,24 +186,40 @@ class ConvolutionalLayer(object):
         
         self.d_weight = np.zeros(self.weight.shape)
         self.d_bias = np.zeros(self.bias.shape)
+        self.d_bias = np.sum(top_diff,axis=(2,3))
         bottom_diff = np.zeros(self.input_pad.shape)
+        self.col2img = np.zeros([self.input_pad.shape[0]*self.input_pad.shape[2]*self.input_pad.shape[3]\
+             ,self.channel_in*self.kernel_size*self.kernel_size ])
+        # print(self.col2img.shape)
         # padding
-       
+        self.d_bias = np.sum(top_diff, axis=(0, 2, 3))
+        input_pad = np.zeros([self.input_pad.shape[0], self.input_pad.shape[1], \
+            self.input_pad.shape[2]+2*self.kernel_size-2, self.input_pad.shape[3]+2*self.kernel_size-2])
+        input_pad[:, :, self.kernel_size-1:1-self.kernel_size, self.kernel_size-1:1-self.kernel_size] = self.input_pad
         # top_diff->top_diff_pad_reshape:N ,cout,H , W => N * H * W ,cout
         top_diff_pad = np.zeros([top_diff.shape[0], top_diff.shape[1], top_diff.shape[2]+2*self.kernel_size-2, top_diff.shape[3]+2*self.kernel_size-2])
         top_diff_pad[:, :, self.kernel_size-1:1-self.kernel_size, self.kernel_size-1:1-self.kernel_size] = top_diff
         top_diff_pad_reshape = np.zeros([self.input.shape[0]*self.input_pad.shape[2]*self.input_pad.shape[3], top_diff.shape[1]*(self.kernel_size**2)])
-        for idxn in range(self.input_pad.shape[0]):
+        # print(top_diff_pad_reshape.shape)
+        # print(top_diff.shape)
+        # print(self.input_pad.shape)
+        for idxn in range(self.input_pad.shape[0]):       
             for idxh in range(self.input_pad.shape[2]):
                 for idxw in range(self.input_pad.shape[3]):
                     row_i = idxn * self.input_pad.shape[2] * self.input_pad.shape[3] + idxh * self.input_pad.shape[3] + idxw
                     top_diff_pad_reshape[row_i,:] = top_diff_pad[idxn, :,\
-                         idxh*self.stride:idxh*self.stride+self.kernel_size, idxw*self.stride:idxw*self.stride+self.kernel_size].reshape([-1])   
+                         idxh*self.stride:idxh*self.stride+self.kernel_size, idxw*self.stride:idxw*self.stride+self.kernel_size].reshape([-1]) 
+                         
+                    self.col2img[row_i,:] = input_pad[idxn, :,\
+                         idxh*self.stride:idxh*self.stride+self.kernel_size, idxw*self.stride:idxw*self.stride+self.kernel_size].reshape([-1])
         
         
+        
+        self.d_weight = np.dot(self.col2img.T,np.sum(top_diff_pad_reshape.reshape([top_diff_pad_reshape.shape[0],\
+            self.channel_out,self.kernel_size,self.kernel_size]),axis=(2,3))).reshape(self.channel_in,self.kernel_size,self.kernel_size,-1)
+        print('dweight',self.d_weight)
         bottom_diff = np.matmul(top_diff_pad_reshape , np.rot90(self.weight, k=2, axes=(1,2)).transpose(3,1,2,0).reshape(-1, self.channel_in))  
         bottom_diff = np.reshape(bottom_diff,[self.input_pad.shape[0],self.input_pad.shape[2],self.input_pad.shape[3],self.channel_in]).transpose(0,3,1,2)
-        
         bottom_diff = bottom_diff[:, :, self.padding:self.padding+self.input.shape[2], self.padding:self.padding+self.input.shape[3]]
         
         
@@ -257,4 +273,26 @@ class MaxPoolingLayer(object):
     def backward(self, top_diff):
 
         bottom_diff = np.multiply(self.max_index, top_diff.repeat(self.kernel_size,2).repeat(self.kernel_size,3))
+        return bottom_diff
+class FlattenLayer(object):
+    def __init__(self, input_shape, output_shape):
+        self.input_shape = input_shape
+        self.output_shape = output_shape
+        assert np.prod(self.input_shape) == np.prod(self.output_shape)
+        print('\tFlatten layer with input shape %s, output shape %s.' % (str(self.input_shape), str(self.output_shape)))
+    def forward(self, input):
+        # print(input.shape)
+        assert list(input.shape[1:]) == list(self.input_shape)
+        # matconvnet feature map dim: [N, height, width, channel]
+        # ours feature map dim: [N, channel, height, width]
+        self.input = np.transpose(input, [0, 2, 3, 1])
+        self.output = self.input.reshape([self.input.shape[0]] + list(self.output_shape))
+        return self.output
+    def backward(self, top_diff):
+        assert list(top_diff.shape[1:]) == list(self.output_shape)
+        # b,c,h,w = self.input.shape
+        # top_diff = top_diff.reshape(b,c,h,w)
+        
+        top_diff = np.transpose(top_diff, [0, 3, 1, 2])
+        bottom_diff = top_diff.reshape([top_diff.shape[0]] + list(self.input_shape))
         return bottom_diff
