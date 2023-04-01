@@ -290,8 +290,8 @@ class FlattenLayer(object):
         return self.output
     def backward(self, top_diff):
         assert list(top_diff.shape[1:]) == list(self.output_shape)
-        # b,c,h,w = self.input.shape
-        # top_diff = top_diff.reshape(b,c,h,w)
+        b,c,h,w = self.input.shape
+        top_diff = top_diff.reshape(b,c,h,w)
         
         top_diff = np.transpose(top_diff, [0, 3, 1, 2])
         bottom_diff = top_diff.reshape([top_diff.shape[0]] + list(self.input_shape))
