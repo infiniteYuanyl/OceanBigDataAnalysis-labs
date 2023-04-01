@@ -190,7 +190,7 @@ class ConvolutionalLayer(object):
         bottom_diff = np.zeros(self.input_pad.shape)
         self.col2img = np.zeros([self.input_pad.shape[0]*self.input_pad.shape[2]*self.input_pad.shape[3]\
              ,self.channel_in*self.kernel_size*self.kernel_size ])
-        # print(self.col2img.shape)
+        
         # padding
         self.d_bias = np.sum(top_diff, axis=(0, 2, 3))
         input_pad = np.zeros([self.input_pad.shape[0], self.input_pad.shape[1], \
@@ -200,9 +200,7 @@ class ConvolutionalLayer(object):
         top_diff_pad = np.zeros([top_diff.shape[0], top_diff.shape[1], top_diff.shape[2]+2*self.kernel_size-2, top_diff.shape[3]+2*self.kernel_size-2])
         top_diff_pad[:, :, self.kernel_size-1:1-self.kernel_size, self.kernel_size-1:1-self.kernel_size] = top_diff
         top_diff_pad_reshape = np.zeros([self.input.shape[0]*self.input_pad.shape[2]*self.input_pad.shape[3], top_diff.shape[1]*(self.kernel_size**2)])
-        # print(top_diff_pad_reshape.shape)
-        # print(top_diff.shape)
-        # print(self.input_pad.shape)
+        
         for idxn in range(self.input_pad.shape[0]):       
             for idxh in range(self.input_pad.shape[2]):
                 for idxw in range(self.input_pad.shape[3]):
@@ -217,7 +215,7 @@ class ConvolutionalLayer(object):
         
         self.d_weight = np.dot(self.col2img.T,np.sum(top_diff_pad_reshape.reshape([top_diff_pad_reshape.shape[0],\
             self.channel_out,self.kernel_size,self.kernel_size]),axis=(2,3))).reshape(self.channel_in,self.kernel_size,self.kernel_size,-1)
-        print('dweight',self.d_weight)
+        
         bottom_diff = np.matmul(top_diff_pad_reshape , np.rot90(self.weight, k=2, axes=(1,2)).transpose(3,1,2,0).reshape(-1, self.channel_in))  
         bottom_diff = np.reshape(bottom_diff,[self.input_pad.shape[0],self.input_pad.shape[2],self.input_pad.shape[3],self.channel_in]).transpose(0,3,1,2)
         bottom_diff = bottom_diff[:, :, self.padding:self.padding+self.input.shape[2], self.padding:self.padding+self.input.shape[3]]
